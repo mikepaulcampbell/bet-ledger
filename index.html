@@ -1,0 +1,421 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#12181F">
+<title>Bet Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#12181F;--panel:#161E27;--field:#1B242E;--rule:#2C3742;--hair:#1E262F;
+--bone:#E8E4D9;--mute:#8A94A0;--win:#6FA57C;--loss:#C0605A;--flag:#D9A441;--pad:clamp(14px,4vw,32px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--bone);
+ font:400 14px/1.5 'IBM Plex Mono',ui-monospace,monospace;-webkit-font-smoothing:antialiased;
+ padding-top:env(safe-area-inset-top)}
+h1,h2,h3{font-family:'IBM Plex Sans Condensed',system-ui,sans-serif;font-weight:700;letter-spacing:-.01em;margin:0}
+.wrap{max-width:760px;margin:0 auto;padding:var(--pad) var(--pad) 70px}
+.eyebrow{color:var(--mute);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+h1{font-size:clamp(22px,5vw,30px);margin:.3em 0 .15em}
+.sub{color:var(--mute);font-size:12.5px}
+.tabs{display:flex;margin:22px 0 0;border-bottom:1px solid var(--rule)}
+.tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--mute);
+ font:600 12px/1 'IBM Plex Sans Condensed',sans-serif;letter-spacing:.09em;text-transform:uppercase;
+ padding:12px 15px 11px;cursor:pointer;margin-bottom:-1px}
+.tab[aria-selected=true]{color:var(--bone);border-bottom-color:var(--flag)}
+.tab:hover{color:var(--bone)}.tab:focus-visible{outline:2px solid var(--flag);outline-offset:2px}
+.tab .cnt{color:var(--mute);font-weight:400;margin-left:5px}
+.panel[hidden]{display:none}.panel{padding-top:24px}
+label{display:block;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin-bottom:5px}
+input,select,textarea{width:100%;background:var(--field);border:1px solid var(--rule);color:var(--bone);
+ border-radius:2px;padding:10px;font:400 16px/1.4 'IBM Plex Mono',monospace}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--flag)}
+input[readonly]{color:var(--mute);background:#151C24}
+textarea{resize:vertical;min-height:60px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.grid .full{grid-column:1/-1}
+button.act{background:var(--flag);color:#12181F;border:0;border-radius:2px;padding:12px 20px;
+ font:700 12px/1 'IBM Plex Sans Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+button.act:hover{background:#E8B75A}button.act:disabled{opacity:.45;cursor:default}
+button.ghost{background:none;color:var(--mute);border:1px solid var(--rule);border-radius:2px;
+ padding:11px 15px;font:600 11px/1 'IBM Plex Sans Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+button.ghost:hover{color:var(--bone);border-color:var(--mute)}
+.stakebar{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+ background:var(--panel);border:1px solid var(--rule);border-left:3px solid var(--flag);
+ border-radius:2px;padding:12px 14px;margin:16px 0}
+.stakebar span{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.stakebar b{font-family:'IBM Plex Sans Condensed';font-size:26px}
+.stakebar em{font-style:normal;color:var(--mute);font-size:11.5px}
+.msg{padding:10px 13px;border-radius:2px;font-size:12.5px;margin:14px 0;display:none}
+.msg.ok{display:block;background:#17241B;border-left:3px solid var(--win);color:#BFD9C6}
+.msg.err{display:block;background:#241717;border-left:3px solid var(--loss);color:#E0C0BD}
+.msg.info{display:block;background:#1B1B14;border-left:3px solid var(--flag);color:#D3CDBD}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:2px;padding:13px 14px;margin-bottom:10px}
+.card .top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.card .sel{font-size:13.5px;line-height:1.35}
+.card .meta{color:var(--mute);font-size:11px;margin-top:4px}
+.card .amt{font-family:'IBM Plex Sans Condensed';font-size:17px;white-space:nowrap}
+.settle{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap;align-items:center}
+.settle button{flex:0 0 auto;padding:9px 14px;font-size:11px;border-radius:2px;cursor:pointer;
+ font-family:'IBM Plex Sans Condensed';font-weight:600;letter-spacing:.06em;text-transform:uppercase;border:1px solid}
+.bw{background:none;border-color:#31513A;color:var(--win)}.bw:hover{background:#17241B}
+.bl{background:none;border-color:#4A2320;color:var(--loss)}.bl:hover{background:#241717}
+.bp{background:none;border-color:var(--rule);color:var(--mute)}.bp:hover{background:#1B242E}
+.settle input{flex:1;min-width:100px;padding:8px 10px;font-size:15px}
+.empty{border:1px dashed var(--rule);border-radius:2px;padding:34px 20px;text-align:center;color:var(--mute);font-size:13px}
+.tot{display:flex;flex-wrap:wrap;gap:18px 30px;margin-bottom:20px}
+.tot div span{display:block;color:var(--mute);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+.tot b{font-family:'IBM Plex Sans Condensed';font-size:22px}
+.pos{color:var(--win)}.neg{color:var(--loss)}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+th{font-family:'IBM Plex Sans Condensed';font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+ color:var(--mute);text-align:right;padding:7px 5px;border-bottom:1px solid var(--rule);font-weight:600}
+th:first-child{text-align:left}
+td{padding:6px 5px;text-align:right;border-bottom:1px solid var(--hair);font-variant-numeric:tabular-nums}
+td:first-child{text-align:left}
+.bar{display:flex;gap:9px;flex-wrap:wrap;margin-top:22px;padding-top:16px;border-top:1px solid var(--rule)}
+.hint{color:var(--mute);font-size:11px;margin-top:6px}
+.status{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--rule);
+ padding:8px calc(var(--pad)) calc(8px + env(safe-area-inset-bottom));font-size:11px;color:var(--mute);
+ display:flex;justify-content:space-between;gap:12px;align-items:center;z-index:20}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px}
+.d-ok{background:var(--win)}.d-q{background:var(--flag)}.d-x{background:var(--loss)}
+@media(max-width:520px){.grid{grid-template-columns:1fr}.tab{padding:11px 9px;font-size:11px}.hide-s{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><div class="wrap">
+
+<header>
+<div class="eyebrow">Bet ledger</div>
+<h1>Log a bet</h1>
+<div class="sub">Writes straight to your sheet. Queues locally when there is no signal.</div>
+</header>
+
+<div class="msg" id="sysmsg"></div>
+
+<div class="tabs" role="tablist">
+<button class="tab" role="tab" id="t1" aria-controls="p1" aria-selected="true">Add</button>
+<button class="tab" role="tab" id="t2" aria-controls="p2" aria-selected="false">Open<span class="cnt" id="cOpen">0</span></button>
+<button class="tab" role="tab" id="t3" aria-controls="p3" aria-selected="false">Ledger<span class="cnt" id="cDone">0</span></button>
+<button class="tab" role="tab" id="t4" aria-controls="p4" aria-selected="false">Setup</button>
+</div>
+
+<section class="panel" id="p1" role="tabpanel" aria-labelledby="t1">
+<div class="grid">
+<div><label for="f_date">Date placed</label><input type="date" id="f_date"></div>
+<div><label for="f_channel">Channel</label><select id="f_channel">
+<option>DK Sportsbook</option><option>DK Horse</option><option>In-person</option></select></div>
+<div><label for="f_sport">Sport or track</label><input id="f_sport" list="sports" placeholder="NFL, UFC, Gulfstream"></div>
+<div><label for="f_type">Bet type</label><select id="f_type"></select></div>
+<div><label for="f_struct">Structure</label><select id="f_struct">
+<option value="straight">Straight</option><option value="box">Box</option>
+<option value="key">Key</option><option value="manual">Manual combinations</option></select></div>
+<div><label for="f_horses">Runners selected</label><input type="number" id="f_horses" min="1" step="1" inputmode="numeric" placeholder="exotics only"></div>
+<div class="full"><label for="f_sel">Selection <span style="color:var(--flag)">required</span></label>
+<input id="f_sel" placeholder="CIN +3.5"><div class="hint" id="selHint"></div></div>
+<div><label for="f_odds">Odds taken</label><input id="f_odds" inputmode="text" placeholder="-110"></div>
+<div><label for="f_base">Base amount ($)</label><input type="number" id="f_base" min="0" step="0.5" inputmode="decimal" value="5"></div>
+<div><label for="f_combos">Combinations</label><input type="number" id="f_combos" min="1" step="1" inputmode="numeric" value="1"></div>
+<div><label for="f_live">Placed</label><select id="f_live">
+<option value="pregame">Pre-game</option><option value="live">Live</option></select></div>
+<div class="full"><label for="f_note">Note</label><textarea id="f_note" placeholder="Optional"></textarea></div>
+</div>
+<datalist id="sports"><option>NFL</option><option>NBA</option><option>MLB</option><option>NHL</option>
+<option>NCAAF</option><option>NCAAB</option><option>UFC</option><option>Gulfstream</option>
+<option>Santa Anita</option><option>Churchill Downs</option><option>Saratoga</option></datalist>
+<div class="stakebar"><div><span>Total at risk</span><em id="stakeExpl">1 combination</em></div><b id="stakeVal">$5</b></div>
+<div class="msg" id="msg"></div>
+<div class="bar"><button class="act" id="save">Save bet</button><button class="ghost" id="clear">Clear</button></div>
+</section>
+
+<section class="panel" id="p2" role="tabpanel" aria-labelledby="t2" hidden><div id="openList"></div></section>
+
+<section class="panel" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+<div class="tot">
+<div><span>Settled</span><b id="lN">0</b></div><div><span>At risk</span><b id="lS">$0</b></div>
+<div><span>Profit</span><b id="lP">$0</b></div><div><span>ROI</span><b id="lR">&mdash;</b></div></div>
+<div id="ledgerBody"></div>
+<div class="bar"><button class="ghost" id="exp">Export CSV</button></div>
+</section>
+
+<section class="panel" id="p4" role="tabpanel" aria-labelledby="t4" hidden>
+<div class="grid">
+<div class="full"><label for="s_url">Apps Script web app URL</label>
+<input id="s_url" placeholder="https://script.google.com/macros/s/.../exec"></div>
+<div class="full"><label for="s_sec">Shared secret</label>
+<input id="s_sec" placeholder="must match SECRET in Code.gs"></div>
+</div>
+<div class="msg" id="setupmsg"></div>
+<div class="bar"><button class="act" id="s_save">Save &amp; test</button>
+<button class="ghost" id="s_flush">Retry queued</button></div>
+<div class="hint">Stored on this device only. Never sent anywhere but your own script.</div>
+</section>
+
+</div>
+<div class="status"><div id="stConn"><span class="dot d-x"></span>Not connected</div><div id="stQueue"></div></div>
+<script>
+const $=id=>document.getElementById(id);
+const CFG='betcfg:v1', QUEUE='betqueue:v1';
+let CFGV={url:'',secret:''}, BETS=[], Q=[];
+
+const TYPES={
+ 'DK Sportsbook':['spread','moneyline','game total','team total','player prop','method of victory','parlay','teaser','future'],
+ 'In-person':['spread','moneyline','game total','team total','player prop','method of victory','parlay','teaser','future'],
+ 'DK Horse':['win','place','show','win/place','exacta','trifecta','superfecta','daily double','pick N']
+};
+const EXOTIC={exacta:2,trifecta:3,superfecta:4};
+const money=v=>(v<0?'\u2212':'')+'$'+Math.abs(v).toFixed(2);
+const todayISO=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
+
+/* ---------- combination math ---------- */
+function perm(n,k){if(k>n)return 0;let r=1;for(let i=0;i<k;i++)r*=(n-i);return r}
+function combos(){
+ const t=$('f_type').value, st=$('f_struct').value, n=+$('f_horses').value||0;
+ const k=EXOTIC[t];
+ if(st==='manual') return {c:Math.max(1,+$('f_combos').value||1),why:'entered by hand'};
+ if(!k||st==='straight') return {c:1,why:'single combination'};
+ if(st==='box'){const c=perm(n,k);return c?{c,why:`${t} box over ${n} runners`}:{c:1,why:`need at least ${k} runners`}}
+ if(st==='key'){const c=perm(n-1,k-1);return c?{c,why:`1 key plus ${n-1} others`}:{c:1,why:`need at least ${k} runners`}}
+ return {c:1,why:'single combination'};
+}
+function refreshStake(){
+ const {c,why}=combos(); const base=+$('f_base').value||0;
+ if($('f_struct').value!=='manual') $('f_combos').value=c;
+ $('f_combos').readOnly = $('f_struct').value!=='manual';
+ $('stakeVal').textContent=money(base*c);
+ $('stakeExpl').textContent=c===1?why:`${money(base)} \u00d7 ${c} \u2014 ${why}`;
+}
+
+const COMBAT=/\b(ufc|mma|bellator|pfl|boxing|one championship)\b/i;
+const PROMPT={
+ combat:{
+  'moneyline':        ['Pereira ML','Fighter to win outright.'],
+  'method of victory':['Pereira by KO/TKO','Name the fighter and the method: KO/TKO, submission, or decision.'],
+  'game total':       ['Over 2.5 rounds','Rounds over/under. Same bucket as football points or baseball runs \u2014 it is a total.'],
+  'player prop':      ['Pereira over 65.5 sig strikes','Strikes, takedowns, control time. Fighter name first.'],
+  'spread':           ['Pereira -1.5 rounds','Round handicap.'],
+  'parlay':           ['Pereira ML + under 2.5 rounds','List every leg.'],
+  'future':           ['Pereira to hold title end of 2026','']
+ },
+ general:{
+  'moneyline':        ['CIN ML',''],
+  'spread':           ['CIN +3.5',''],
+  'game total':       ['Over 44.5','Combined score, runs, or goals.'],
+  'team total':       ['CIN over 20.5',''],
+  'player prop':      ['Chase Brown over 48.5 rush yds','Player name first, then the line.'],
+  'method of victory':['',''],
+  'parlay':           ['CIN +3.5 + Over 44.5','List every leg.'],
+  'teaser':           ['CIN +9.5 + DAL +9.5','List every leg.'],
+  'future':           ['CIN to win AFC North','']
+ },
+ horse:{
+  'win':['#4 Forever Young R7',''],'place':['#4 Forever Young R7',''],'show':['#4 Forever Young R7',''],
+  'win/place':['#4 Forever Young R7',''],
+  'exacta':['3-5 R7','Order matters unless boxed.'],
+  'trifecta':['3-5-7 R7','Order matters unless boxed.'],
+  'superfecta':['3-5-7-9 R7','Order matters unless boxed.'],
+  'daily double':['R7 #4 / R8 #2','One selection per leg.'],
+  'pick N':['R5 #1 / R6 #3 / R7 #4','One selection per leg.']
+ }};
+function refreshPrompt(){
+ const ch=$('f_channel').value, t=$('f_type').value;
+ const set = ch==='DK Horse' ? PROMPT.horse
+           : (COMBAT.test($('f_sport').value) ? PROMPT.combat : PROMPT.general);
+ const [ph,hint]=set[t]||['',''];
+ $('f_sel').placeholder=ph||'What you backed';
+ $('selHint').textContent=hint||'';
+}
+function fillTypes(){
+ const ch=$('f_channel').value, cur=$('f_type').value;
+ $('f_type').innerHTML=TYPES[ch].map(t=>`<option>${t}</option>`).join('');
+ if(TYPES[ch].includes(cur))$('f_type').value=cur;
+ const horse=ch==='DK Horse';
+ $('f_odds').placeholder=horse?'pari-mutuel \u2014 leave blank':'-110';
+ refreshStake();
+}
+
+/* ---------- local helpers ---------- */
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+function flash(el,t,k){const m=$(el);m.innerHTML=t;m.className='msg '+k;if(k==='ok')setTimeout(()=>m.className='msg',3500)}
+
+['f_channel','f_type','f_struct','f_horses','f_base','f_combos'].forEach(id=>
+ $(id).addEventListener('input',()=>{if(id==='f_channel')fillTypes();else{refreshPrompt();refreshStake()}}));
+$('f_sport').addEventListener('input',refreshPrompt);
+
+/* ---------- transport ----------
+   text/plain avoids a CORS preflight, which Apps Script cannot answer. */
+async function api(payload){
+ if(!CFGV.url) throw new Error('no script URL configured');
+ const r=await fetch(CFGV.url,{method:'POST',redirect:'follow',
+   headers:{'Content-Type':'text/plain;charset=utf-8'},
+   body:JSON.stringify(Object.assign({secret:CFGV.secret},payload))});
+ const d=await r.json();
+ if(!d.ok) throw new Error(d.error||'script refused the request');
+ return d;
+}
+async function pull(){
+ if(!CFGV.url) return;
+ const u=CFGV.url+'?secret='+encodeURIComponent(CFGV.secret);
+ const r=await fetch(u,{redirect:'follow'});
+ const d=await r.json();
+ if(!d.ok) throw new Error(d.error||'read failed');
+ BETS=d.bets||[];
+}
+
+/* ---------- offline queue ---------- */
+function qAdd(item){Q.push(item);lsSet(QUEUE,Q);paintStatus()}
+async function qFlush(){
+ if(!Q.length||!CFGV.url) return;
+ const adds=Q.filter(x=>x.action==='add').map(x=>x.bet);
+ const setts=Q.filter(x=>x.action==='settle');
+ try{
+  if(adds.length) await api({action:'add',bets:adds});
+  for(const s of setts) await api({action:'settle',id:s.id,result:s.result,payout:s.payout});
+  Q=[];lsSet(QUEUE,Q);
+ }catch(e){ paintStatus(); throw e }
+ paintStatus();
+}
+function paintStatus(){
+ $('stQueue').textContent = Q.length ? Q.length+' waiting to sync' : '';
+ const c=$('stConn');
+ if(!CFGV.url){c.innerHTML='<span class="dot d-x"></span>Not set up';return}
+ if(Q.length){c.innerHTML='<span class="dot d-q"></span>Queued locally';return}
+ c.innerHTML='<span class="dot d-ok"></span>Synced to sheet';
+}
+
+/* ---------- save ---------- */
+$('save').addEventListener('click',async()=>{
+ const sel=$('f_sel').value.trim();
+ if(!sel){flash('msg','Add a selection before saving.','err');$('f_sel').focus();return}
+ const base=+$('f_base').value;
+ if(!(base>0)){flash('msg','Base amount must be more than zero.','err');$('f_base').focus();return}
+ const {c}=combos();
+ const bet={id:'b'+Date.now()+Math.floor(Math.random()*999),
+  date:$('f_date').value||todayISO(),channel:$('f_channel').value,sport:$('f_sport').value.trim(),
+  type:$('f_type').value,structure:$('f_struct').value,selection:sel,odds:$('f_odds').value.trim(),
+  base:base,combos:c,stake:+(base*c).toFixed(2),timing:$('f_live').value,
+  note:$('f_note').value.trim(),result:'',payout:''};
+ BETS.unshift(bet);
+ ['f_sel','f_odds','f_note'].forEach(i=>$(i).value='');$('f_sel').focus();render();
+ try{ await api({action:'add',bets:[bet]}); flash('msg','Saved to your sheet.','ok') }
+ catch(e){ qAdd({action:'add',bet}); flash('msg','No connection \u2014 held on this device and will sync automatically.','info') }
+ paintStatus();
+});
+$('clear').addEventListener('click',()=>{
+ ['f_sel','f_odds','f_note','f_sport','f_horses'].forEach(i=>$(i).value='');
+ $('f_struct').value='straight';$('f_base').value=5;refreshStake();$('msg').className='msg'});
+
+/* ---------- settle ---------- */
+function impliedPayout(b){
+ const o=parseFloat(b.odds); if(!o||isNaN(o))return null;
+ return (+b.stake)*(1+(o>0?o/100:100/Math.abs(o)));
+}
+async function settle(id,res){
+ const b=BETS.find(x=>String(x.id)===String(id)); if(!b)return;
+ const inp=document.querySelector('[data-pay="'+id+'"]');
+ let pay=inp?parseFloat(inp.value):NaN;
+ if(res==='win'&&!(pay>0)){
+   const est=impliedPayout(b);
+   if(est==null){flash('msg','Enter the payout for this win.','err');inp&&inp.focus();return}
+   pay=est;
+ }
+ if(res==='loss')pay=0;
+ if(res==='push')pay=+b.stake;
+ b.result=res;b.payout=+pay.toFixed(2);render();
+ try{ await api({action:'settle',id:b.id,result:b.result,payout:b.payout}) }
+ catch(e){ qAdd({action:'settle',id:b.id,result:b.result,payout:b.payout}) }
+ paintStatus();
+};
+
+$('openList').addEventListener('click',e=>{
+ const b=e.target.closest('[data-act]');
+ if(b) settle(b.getAttribute('data-id'), b.getAttribute('data-act'));
+});
+
+/* ---------- render ---------- */
+function render(){
+ const open=BETS.filter(b=>!b.result), done=BETS.filter(b=>b.result);
+ $('cOpen').textContent=open.length;$('cDone').textContent=done.length;
+ $('openList').innerHTML=open.length?open.map(b=>{
+  const est=impliedPayout(b);
+  return '<div class="card"><div class="top"><div><div class="sel">'+esc(b.selection)+'</div>'+
+   '<div class="meta">'+esc(b.date)+' &middot; '+esc(b.channel)+(b.sport?' &middot; '+esc(b.sport):'')+
+   ' &middot; '+esc(b.type)+(b.structure&&b.structure!=='straight'?' '+esc(b.structure):'')+
+   (b.odds!==''&&b.odds!=null?' &middot; '+esc(b.odds):'')+(b.combos>1?' &middot; '+b.combos+' combos':'')+
+   '</div></div><div class="amt">'+money(+b.stake)+'</div></div><div class="settle">'+
+   '<input type="number" step="0.01" min="0" inputmode="decimal" data-pay="'+esc(b.id)+'" placeholder="'+
+   (est?'payout \u2014 est '+est.toFixed(2):'payout returned')+'">'+
+   '<button class="bw" data-act="win"  data-id="'+esc(b.id)+'">Won</button>'+
+   '<button class="bl" data-act="loss" data-id="'+esc(b.id)+'">Lost</button>'+
+   '<button class="bp" data-act="push" data-id="'+esc(b.id)+'">Push</button></div></div>'}).join('')
+  : '<div class="empty">No open bets. Anything you log lands here until you settle it.</div>';
+
+ const st=done.reduce((a,b)=>a+(+b.stake||0),0);
+ const pr=done.reduce((a,b)=>a+((+b.payout||0)-(+b.stake||0)),0);
+ $('lN').textContent=done.length;$('lS').textContent=money(st);
+ $('lP').textContent=money(pr);$('lP').className=pr>=0?'pos':'neg';
+ $('lR').textContent=st?((pr>=0?'+':'')+(100*pr/st).toFixed(1)+'%'):'\u2014';
+ $('lR').className=pr>=0?'pos':'neg';
+ if(!done.length){$('ledgerBody').innerHTML='<div class="empty">Settled bets and ROI by type appear here.</div>';return}
+ const g={};
+ done.forEach(b=>{const k=b.type||'unknown';(g[k]=g[k]||{n:0,w:0,l:0,st:0,p:0});
+  g[k].n++;if(b.result==='win')g[k].w++;if(b.result==='loss')g[k].l++;
+  g[k].st+=+b.stake||0;g[k].p+=(+b.payout||0)-(+b.stake||0)});
+ const rows=Object.entries(g).sort((a,b)=>b[1].n-a[1].n).map(([k,v])=>
+  '<tr><td>'+esc(k)+'</td><td>'+v.n+'</td><td>'+(v.w+v.l?(100*v.w/(v.w+v.l)).toFixed(0)+'%':'\u2014')+'</td>'+
+  '<td class="hide-s">'+money(v.st)+'</td><td class="'+(v.p>=0?'pos':'neg')+'">'+money(v.p)+'</td>'+
+  '<td class="'+(v.p>=0?'pos':'neg')+'">'+(v.st?((v.p>=0?'+':'')+(100*v.p/v.st).toFixed(1)+'%'):'\u2014')+'</td></tr>').join('');
+ $('ledgerBody').innerHTML='<table><thead><tr><th>Bet type</th><th>N</th><th>Hit</th>'+
+  '<th class="hide-s">At risk</th><th>P/L</th><th>ROI</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+  '<div class="hint">'+done.length+' settled. Types under about 50 bets are not yet a signal.</div>';
+}
+
+/* ---------- export ---------- */
+$('exp').addEventListener('click',()=>{
+ const cols=['id','date','channel','sport','type','structure','selection','odds','base','combos','stake','timing','result','payout','note'];
+ const csv=[cols.join(',')].concat(BETS.map(b=>cols.map(c=>{
+  const v=b[c]==null?'':String(b[c]);
+  return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(','))).join('\n');
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+ a.download='bet_ledger.csv';a.click();URL.revokeObjectURL(a.href);
+});
+
+/* ---------- setup ---------- */
+$('s_save').addEventListener('click',async()=>{
+ CFGV={url:$('s_url').value.trim().replace(/\/+$/,''),secret:$('s_sec').value.trim()};
+ if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(CFGV.url)){
+  flash('setupmsg','That does not look like a deployed web app URL. It should end in /exec','err');return}
+ lsSet(CFG,CFGV);
+ flash('setupmsg','Testing\u2026','info');
+ try{ await pull(); await qFlush(); render(); paintStatus();
+      flash('setupmsg','Connected. '+BETS.length+' bet'+(BETS.length===1?'':'s')+' read from your sheet.','ok') }
+ catch(e){ flash('setupmsg','Could not reach the sheet: '+esc(e.message),'err'); paintStatus() }
+});
+$('s_flush').addEventListener('click',async()=>{
+ try{ await qFlush(); await pull(); render();
+      flash('setupmsg','Queue cleared.','ok') }
+ catch(e){ flash('setupmsg','Still cannot reach the sheet: '+esc(e.message),'err') }
+});
+
+/* ---------- tabs ---------- */
+const tabs=[...document.querySelectorAll('.tab')];
+tabs.forEach(t=>t.addEventListener('click',()=>tabs.forEach(o=>{
+ const on=o===t;o.setAttribute('aria-selected',on);$(o.getAttribute('aria-controls')).hidden=!on})));
+
+/* ---------- boot ---------- */
+window.addEventListener('online',()=>{qFlush().then(()=>{pull().then(render)}).catch(()=>{})});
+(async function(){
+ CFGV=lsGet(CFG,{url:'',secret:''}); Q=lsGet(QUEUE,[]);
+ $('s_url').value=CFGV.url; $('s_sec').value=CFGV.secret;
+ $('f_date').value=todayISO(); fillTypes(); paintStatus();
+ if(!CFGV.url){
+  flash('sysmsg','<b>Not connected yet.</b> Open the Setup tab and paste your Apps Script URL and secret.','info');
+  tabs.find(t=>t.id==='t4').click(); render(); return;
+ }
+ try{ await qFlush() }catch(e){}
+ try{ await pull(); render(); paintStatus() }
+ catch(e){ flash('sysmsg','Could not reach your sheet. Anything you log will be held here and synced later.','info'); render(); paintStatus() }
+})();
+</script></body></html>
