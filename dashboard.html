@@ -1,0 +1,731 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#12181F">
+<title>Bet Ledger &mdash; Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#12181F;--panel:#161E27;--field:#1B242E;--rule:#2C3742;--hair:#1E262F;
+--bone:#E8E4D9;--mute:#8A94A0;--dim:#5D6670;--win:#6FA57C;--loss:#C0605A;--flag:#D9A441;
+--pad:clamp(14px,4vw,32px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--bone);
+ font:400 14px/1.5 'IBM Plex Mono',ui-monospace,monospace;-webkit-font-smoothing:antialiased;
+ padding-top:env(safe-area-inset-top)}
+h1,h2,h3,.disp{font-family:'IBM Plex Sans Condensed',system-ui,sans-serif;font-weight:700;letter-spacing:-.01em;margin:0}
+.wrap{max-width:860px;margin:0 auto;padding:var(--pad) var(--pad) 64px}
+a{color:var(--flag)}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+h1{font-size:clamp(21px,5vw,28px)}
+.sub{color:var(--mute);font-size:12px;margin-top:3px}
+.backlink{font:600 11px/1 'IBM Plex Sans Condensed',sans-serif;letter-spacing:.08em;
+ text-transform:uppercase;color:var(--mute);text-decoration:none;border:1px solid var(--rule);
+ border-radius:2px;padding:9px 12px;white-space:nowrap}
+.backlink:hover{color:var(--bone);border-color:var(--mute)}
+
+/* hero: exposure */
+.hero{margin:24px 0 0;padding:20px;background:var(--panel);border:1px solid var(--rule);
+ border-left:3px solid var(--flag);border-radius:2px}
+.hero .big{font-family:'IBM Plex Sans Condensed';font-size:clamp(38px,11vw,58px);line-height:.95}
+.hero .cap{color:var(--mute);font-size:12px;margin-top:6px}
+.split{display:flex;gap:26px;margin-top:16px;padding-top:15px;border-top:1px solid var(--rule);flex-wrap:wrap}
+.split div b{font-family:'IBM Plex Sans Condensed';font-size:19px;display:block}
+.split div span{color:var(--mute);font-size:11.5px}
+.ancillary{margin-top:14px;color:var(--mute);font-size:12px;line-height:1.7}
+.ancillary b{color:var(--bone);font-weight:400}
+
+/* tabs */
+.tabs{display:flex;margin:26px 0 0;border-bottom:1px solid var(--rule);overflow-x:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--mute);
+ font:600 12px/1 'IBM Plex Sans Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;
+ padding:12px 14px 11px;cursor:pointer;margin-bottom:-1px;white-space:nowrap}
+.tab[aria-selected=true]{color:var(--bone);border-bottom-color:var(--flag)}
+.tab:hover{color:var(--bone)}.tab:focus-visible{outline:2px solid var(--flag);outline-offset:2px}
+.panel[hidden]{display:none}.panel{padding-top:24px}
+
+h2{font-size:15px;margin:30px 0 4px}
+h2:first-child{margin-top:0}
+.note{color:var(--mute);font-size:12px;line-height:1.65;margin:0 0 16px;max-width:66ch}
+
+/* the break-even ruler — one row per bet type */
+.rule-row{padding:11px 0;border-bottom:1px solid var(--hair)}
+.rule-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:7px}
+.rule-name{font-size:13px}
+.rule-meta{color:var(--mute);font-size:11px;white-space:nowrap}
+.ruler{position:relative;height:22px;background:var(--field);border-radius:1px;overflow:hidden}
+.ruler .fill{position:absolute;top:0;bottom:0;left:0;background:var(--rule)}
+.ruler .need{position:absolute;top:-1px;bottom:-1px;width:2px;background:var(--flag);z-index:3}
+.ruler .got{position:absolute;top:4px;bottom:4px;width:3px;border-radius:2px;z-index:4}
+.ruler .zone{position:absolute;top:0;bottom:0;z-index:2}
+.rule-foot{display:flex;justify-content:space-between;gap:10px;margin-top:6px;
+ font-size:11px;color:var(--mute)}
+.rule-row.gated .ruler .got{opacity:.35}
+.rule-row.gated .rule-name,.rule-row.gated .rule-foot{opacity:.5}
+.tag{display:inline-block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;
+ padding:1px 5px;border-radius:2px;margin-left:7px;border:1px solid var(--rule);color:var(--mute);vertical-align:1px}
+
+/* mix */
+.stackbar{display:flex;height:26px;border-radius:1px;overflow:hidden;margin:4px 0 10px}
+.stackbar i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:22px;font-size:11.5px;color:var(--mute)}
+.legend span{display:flex;align-items:center;gap:6px}
+.sw{width:9px;height:9px;border-radius:1px;display:inline-block}
+.bucket{margin-bottom:14px}
+.bucket .lab{font-size:11px;color:var(--mute);display:flex;justify-content:space-between}
+
+/* tables + stats */
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+th{font-family:'IBM Plex Sans Condensed';font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+ color:var(--mute);text-align:right;padding:7px 5px;border-bottom:1px solid var(--rule);font-weight:600}
+th:first-child{text-align:left}
+td{padding:7px 5px;text-align:right;border-bottom:1px solid var(--hair);font-variant-numeric:tabular-nums}
+td:first-child{text-align:left}
+tr.gated td{color:var(--dim)}
+.pos{color:var(--win)}.neg{color:var(--loss)}.mut{color:var(--mute)}
+.statrow{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 20px}
+.stat{flex:1 1 150px;background:var(--panel);border:1px solid var(--rule);border-radius:2px;padding:13px 15px}
+.stat b{font-family:'IBM Plex Sans Condensed';font-size:24px;display:block;line-height:1.1}
+.stat span{color:var(--mute);font-size:11.5px;display:block;margin-top:4px}
+.stat.thin{opacity:.5}
+.spark{width:100%;height:52px;display:block;margin-top:6px}
+.empty{border:1px dashed var(--rule);border-radius:2px;padding:26px 18px;color:var(--mute);font-size:12.5px;line-height:1.6}
+.msg{padding:11px 14px;border-radius:2px;font-size:12.5px;margin:16px 0;display:none;line-height:1.6}
+.msg.ok{display:block;background:#17241B;border-left:3px solid var(--win);color:#BFD9C6}
+.msg.err{display:block;background:#241717;border-left:3px solid var(--loss);color:#E0C0BD}
+.msg.info{display:block;background:#1B1B14;border-left:3px solid var(--flag);color:#D3CDBD}
+.bar{display:flex;gap:9px;flex-wrap:wrap;margin-top:24px;padding-top:16px;border-top:1px solid var(--rule)}
+button.ghost{background:none;color:var(--mute);border:1px solid var(--rule);border-radius:2px;
+ padding:10px 14px;font:600 11px/1 'IBM Plex Sans Condensed',sans-serif;letter-spacing:.07em;
+ text-transform:uppercase;cursor:pointer}
+button.ghost:hover{color:var(--bone);border-color:var(--mute)}
+.ctl{display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin:18px 0 4px;padding:11px 0;
+ border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.ctl label{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute)}
+input[type=range]{flex:1;min-width:130px;accent-color:var(--flag);height:2px}
+#thr{font-family:'IBM Plex Sans Condensed';font-size:18px;color:var(--flag);min-width:2.3em}
+footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--rule);color:var(--mute);font-size:11.5px;line-height:1.7}
+@media(max-width:540px){.tab{padding:11px 10px;font-size:11px}.hide-s{display:none}
+ table{font-size:11.5px}th,td{padding:6px 3px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><div class="wrap">
+
+<header>
+<div><h1>Where your money is</h1><div class="sub" id="asof">Loading&hellip;</div></div>
+<a class="backlink" href="index.html">Log a bet</a>
+</header>
+
+<div class="msg" id="sysmsg"></div>
+
+<div class="hero">
+<div class="big" id="heroBig">&mdash;</div>
+<div class="cap" id="heroCap">at risk right now</div>
+<div class="split">
+<div><b id="hSoon">&mdash;</b><span>resolving soon</span></div>
+<div><b id="hLong">&mdash;</b><span>long&#8209;dated</span></div>
+<div><b id="hSettled">&mdash;</b><span>settled so far</span></div>
+</div>
+<div class="ancillary" id="hTotal"></div>
+</div>
+
+<div class="tabs" role="tablist">
+<button class="tab" role="tab" id="t1" aria-controls="p1" aria-selected="true">Position</button>
+<button class="tab" role="tab" id="t2" aria-controls="p2" aria-selected="false">Mix</button>
+<button class="tab" role="tab" id="t3" aria-controls="p3" aria-selected="false">Results</button>
+<button class="tab" role="tab" id="t4" aria-controls="p4" aria-selected="false">Historical</button>
+</div>
+
+<section class="panel" id="p1" role="tabpanel" aria-labelledby="t1">
+<h2>What each bet type needs to break even</h2>
+<p class="note">Worked back from the prices you actually took, weighted by stake. These are exact from the first bet &mdash; no sample size required. The amber mark is the hit rate that would leave you level.</p>
+<div id="needRows"></div>
+<h2>Where the money sits</h2>
+<div id="posTable"></div>
+</section>
+
+<section class="panel" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+<h2>What you are betting on</h2>
+<p class="note">Your mix changes long before your results do. At this volume it is the one trend that says something real inside a single season.</p>
+<div id="mixNow"></div>
+<h2>How the mix has moved</h2>
+<div id="mixTime"></div>
+</section>
+
+<section class="panel" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+<h2>Whole book, recent</h2>
+<div class="statrow" id="rollRow"></div>
+<h2>By bet type</h2>
+<p class="note">Your hit rate against the rate you needed. A type stays greyed until it has enough settled bets to mean anything &mdash; most will be greyed for a long time, and that is the honest reading rather than a gap in the data.</p>
+<div class="ctl">
+<label for="r">Minimum sample</label>
+<input id="r" type="range" min="0" max="150" step="5" value="50">
+<div id="thr">50</div><div id="gated" style="font-size:11.5px;color:var(--mute)"></div>
+</div>
+<div id="resRows"></div>
+<div id="resTable"></div>
+<h2>How each estimate is settling down</h2>
+<p class="note">Running return as the sample grows. Early swings are noise. When a line stops moving, that type has earned a verdict.</p>
+<div id="cumWrap"></div>
+</section>
+
+<section class="panel" id="p4" role="tabpanel" aria-labelledby="t4" hidden>
+<div class="msg info" style="display:block">
+<b>Reconstructed from a shorthand note. Permanent archive, not evidence.</b><br>
+Results were written down; prices and stakes were not. Every bet here carries an assumed type&#8209;level price and a flat one&#8209;unit stake, so hit rate is observed and return is invented. It never mixes with your live ledger.
+</div>
+<div class="statrow" id="hStats"></div>
+<div id="histRows"></div>
+<div id="histTable"></div>
+</section>
+
+<div class="bar">
+<button class="ghost" id="refresh">Refresh from sheet</button>
+<button class="ghost" id="exp">Export CSV</button>
+</div>
+<footer id="foot"></footer>
+</div>
+<script>
+/* ==== DATA LAYER ==== */
+/* ============================================================
+   BET LEDGER — DATA LAYER
+   Every tunable lives in CONFIG. Change a number here and the
+   whole dashboard follows. No metric logic is hardcoded below.
+   ============================================================ */
+
+const CONFIG = {
+  // A bet type's results stay greyed until it has this many settled bets.
+  sampleThreshold: 50,
+
+  // Rolling aggregate windows, in days.
+  windows: [30, 90],
+
+  // A window needs at least this many settled bets before it is drawn.
+  minWindowBets: 15,
+
+  // Types whose horizon is months, shown separately in exposure.
+  longDatedTypes: ['future'],
+
+  // Results that count toward hit rate (denominator).
+  hitRateResults: ['win', 'loss'],
+
+  // Results that count as a hit (numerator).
+  winResults: ['win'],
+
+  // Results that count in ROI but not hit rate.
+  roiOnlyResults: ['push', 'cashout'],
+
+  // Mix view bucket size.
+  mixBucketDays: 14
+};
+
+
+/* ---------- price helpers ---------- */
+
+function toDecimal(american) {
+  const a = Number(american);
+  if (!a || isNaN(a)) return null;
+  return 1 + (a > 0 ? a / 100 : 100 / Math.abs(a));
+}
+
+/** Break-even win probability implied by a price, as a percentage. */
+function breakEven(american) {
+  const d = toDecimal(american);
+  return d ? 100 / d : null;
+}
+
+function fromDecimal(d) {
+  if (!d || d <= 1) return null;
+  return d >= 2 ? Math.round((d - 1) * 100) : Math.round(-100 / (d - 1));
+}
+
+
+/* ---------- normalize ---------- */
+
+function normalize(rows) {
+  return rows.map(function (r) {
+    const stake = Number(r.stake) || 0;
+    const odds = String(r.odds == null ? '' : r.odds).trim();
+    const result = String(r.result || '').trim().toLowerCase();
+    const payout = r.payout === '' || r.payout == null ? null : Number(r.payout);
+    return {
+      id: r.id,
+      date: String(r.date || '').slice(0, 10),
+      channel: r.channel || '',
+      sport: r.sport || '',
+      type: r.type || 'unknown',
+      structure: r.structure || 'straight',
+      selection: r.selection || '',
+      odds: odds === '' ? null : Number(odds),
+      base: Number(r.base) || 0,
+      combos: Number(r.combos) || 1,
+      stake: stake,
+      timing: r.timing || 'pregame',
+      settles: String(r.settles || '').slice(0, 10),
+      result: result,
+      payout: payout,
+      settled: result !== '',
+      profit: result === '' ? null : (payout || 0) - stake,
+      longDated: CONFIG.longDatedTypes.indexOf(r.type) !== -1
+    };
+  }).sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+}
+
+
+/* ---------- VIEW 1: position ---------- */
+
+function position(bets) {
+  const open = bets.filter(function (b) { return !b.settled; });
+  const settled = bets.filter(function (b) { return b.settled; });
+
+  const staked = settled.reduce(function (a, b) { return a + b.stake; }, 0);
+  const profit = settled.reduce(function (a, b) { return a + b.profit; }, 0);
+
+  // Stake-weighted break-even, per type, from the prices actually taken.
+  const byType = {};
+  bets.forEach(function (b) {
+    const t = byType[b.type] || (byType[b.type] = {
+      type: b.type, n: 0, stake: 0, pricedStake: 0, weightedDec: 0, noPrice: 0
+    });
+    t.n++; t.stake += b.stake;
+    const d = toDecimal(b.odds);
+    if (d) { t.pricedStake += b.stake; t.weightedDec += d * b.stake; }
+    else { t.noPrice++; }
+  });
+
+  const types = Object.keys(byType).map(function (k) {
+    const t = byType[k];
+    const avgDec = t.pricedStake ? t.weightedDec / t.pricedStake : null;
+    return {
+      type: t.type,
+      n: t.n,
+      stake: round2(t.stake),
+      avgPrice: avgDec ? fromDecimal(avgDec) : null,
+      requiredHit: avgDec ? round1(100 / avgDec) : null,
+      missingPrice: t.noPrice
+    };
+  }).sort(function (a, b) { return b.n - a.n; });
+
+  return {
+    openCount: open.length,
+    openStake: round2(open.reduce(function (a, b) { return a + b.stake; }, 0)),
+    openSoon: open.filter(function (b) { return !b.longDated; }).length,
+    openSoonStake: round2(open.filter(function (b) { return !b.longDated; })
+      .reduce(function (a, b) { return a + b.stake; }, 0)),
+    openLong: open.filter(function (b) { return b.longDated; }).length,
+    openLongStake: round2(open.filter(function (b) { return b.longDated; })
+      .reduce(function (a, b) { return a + b.stake; }, 0)),
+    settledCount: settled.length,
+    staked: round2(staked),
+    profit: round2(profit),
+    roi: staked ? round1(100 * profit / staked) : null,
+    types: types,
+    missingPrice: bets.filter(function (b) { return b.odds == null; }).length
+  };
+}
+
+
+/* ---------- VIEW 2: mix ---------- */
+
+function mix(bets) {
+  const total = bets.length;
+  const totalStake = bets.reduce(function (a, b) { return a + b.stake; }, 0);
+
+  const agg = {};
+  bets.forEach(function (b) {
+    const t = agg[b.type] || (agg[b.type] = { type: b.type, n: 0, stake: 0 });
+    t.n++; t.stake += b.stake;
+  });
+
+  const shares = Object.keys(agg).map(function (k) {
+    return {
+      type: k,
+      n: agg[k].n,
+      stake: round2(agg[k].stake),
+      betShare: round1(100 * agg[k].n / total),
+      stakeShare: round1(100 * agg[k].stake / totalStake)
+    };
+  }).sort(function (a, b) { return b.stakeShare - a.stakeShare; });
+
+  // top-3 concentration
+  const top3 = shares.slice(0, 3).reduce(function (a, s) { return a + s.stakeShare; }, 0);
+
+  // buckets over time
+  const buckets = bucketize(bets, CONFIG.mixBucketDays);
+
+  return { shares: shares, concentration: round1(top3), buckets: buckets, total: total };
+}
+
+function bucketize(bets, days) {
+  if (!bets.length) return [];
+  const first = new Date(bets[0].date + 'T00:00:00');
+  const out = {};
+  bets.forEach(function (b) {
+    const d = new Date(b.date + 'T00:00:00');
+    const idx = Math.floor((d - first) / (days * 864e5));
+    const key = idx;
+    const bk = out[key] || (out[key] = { idx: idx, start: iso(addDays(first, idx * days)), n: 0, stake: 0, types: {} });
+    bk.n++; bk.stake += b.stake;
+    bk.types[b.type] = (bk.types[b.type] || 0) + b.stake;
+  });
+  return Object.keys(out).map(function (k) { return out[k]; })
+    .sort(function (a, b) { return a.idx - b.idx; })
+    .map(function (bk) {
+      bk.stake = round2(bk.stake);
+      Object.keys(bk.types).forEach(function (t) {
+        bk.types[t] = round1(100 * bk.types[t] / bk.stake);
+      });
+      return bk;
+    });
+}
+
+
+/* ---------- VIEW 3: results ---------- */
+
+function results(bets) {
+  const settled = bets.filter(function (b) { return b.settled; });
+
+  const agg = {};
+  settled.forEach(function (b) {
+    const t = agg[b.type] || (agg[b.type] = {
+      type: b.type, n: 0, w: 0, l: 0, other: 0, stake: 0, profit: 0,
+      pricedStake: 0, weightedDec: 0
+    });
+    t.n++; t.stake += b.stake; t.profit += b.profit;
+    if (CONFIG.winResults.indexOf(b.result) !== -1) t.w++;
+    else if (b.result === 'loss') t.l++;
+    else t.other++;
+    const d = toDecimal(b.odds);
+    if (d) { t.pricedStake += b.stake; t.weightedDec += d * b.stake; }
+  });
+
+  const rows = Object.keys(agg).map(function (k) {
+    const t = agg[k];
+    const denom = t.w + t.l;
+    const avgDec = t.pricedStake ? t.weightedDec / t.pricedStake : null;
+    const req = avgDec ? 100 / avgDec : null;
+    const hit = denom ? 100 * t.w / denom : null;
+    return {
+      type: t.type, n: t.n, w: t.w, l: t.l, other: t.other,
+      stake: round2(t.stake), profit: round2(t.profit),
+      roi: t.stake ? round1(100 * t.profit / t.stake) : null,
+      hit: hit == null ? null : round1(hit),
+      requiredHit: req == null ? null : round1(req),
+      edge: (hit != null && req != null) ? round1(hit - req) : null,
+      sufficient: t.n >= CONFIG.sampleThreshold
+    };
+  }).sort(function (a, b) { return b.n - a.n; });
+
+  return { rows: rows, settledCount: settled.length, threshold: CONFIG.sampleThreshold };
+}
+
+/** Cumulative ROI per type as the sample grows. */
+function cumulative(bets) {
+  const settled = bets.filter(function (b) { return b.settled; });
+  const series = {};
+  const run = {};
+  settled.forEach(function (b) {
+    const r = run[b.type] || (run[b.type] = { stake: 0, profit: 0, n: 0 });
+    r.stake += b.stake; r.profit += b.profit; r.n++;
+    (series[b.type] || (series[b.type] = [])).push({
+      n: r.n, date: b.date, roi: round1(100 * r.profit / r.stake)
+    });
+  });
+  return Object.keys(series).map(function (k) {
+    return { type: k, points: series[k] };
+  }).sort(function (a, b) { return b.points.length - a.points.length; });
+}
+
+/** Rolling aggregate over the whole book. */
+function rolling(bets, asOf) {
+  const settled = bets.filter(function (b) { return b.settled; });
+  const end = asOf ? new Date(asOf + 'T00:00:00') : new Date();
+  return CONFIG.windows.map(function (days) {
+    const cut = addDays(end, -days);
+    const inWin = settled.filter(function (b) {
+      return new Date(b.date + 'T00:00:00') >= cut;
+    });
+    const stake = inWin.reduce(function (a, b) { return a + b.stake; }, 0);
+    const profit = inWin.reduce(function (a, b) { return a + b.profit; }, 0);
+    const w = inWin.filter(function (b) { return CONFIG.winResults.indexOf(b.result) !== -1; }).length;
+    const l = inWin.filter(function (b) { return b.result === 'loss'; }).length;
+    return {
+      days: days, n: inWin.length,
+      stake: round2(stake), profit: round2(profit),
+      roi: stake ? round1(100 * profit / stake) : null,
+      hit: (w + l) ? round1(100 * w / (w + l)) : null,
+      sufficient: inWin.length >= CONFIG.minWindowBets
+    };
+  });
+}
+
+
+/* ---------- util ---------- */
+function round1(v) { return Math.round(v * 10) / 10; }
+function round2(v) { return Math.round(v * 100) / 100; }
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function iso(d) { return d.toISOString().slice(0, 10); }
+
+function buildAll(rawRows, asOf) {
+  const bets = normalize(rawRows);
+  return {
+    bets: bets,
+    position: position(bets),
+    mix: mix(bets),
+    results: results(bets),
+    cumulative: cumulative(bets),
+    rolling: rolling(bets, asOf),
+    config: CONFIG
+  };
+}
+
+
+
+/* ==== HISTORICAL ARCHIVE ==== */
+const HIST={"types": [{"type": "player_prop", "label": "Player props", "n": 344, "w": 171, "l": 171, "hit": 50.0, "be": 53.5, "edge": -3.5, "price": "-115", "roi": -6.5, "profit": -111.15, "staked": 1720.0, "trust": "loose"}, {"type": "spread", "label": "Spreads", "n": 163, "w": 86, "l": 73, "hit": 54.1, "be": 52.4, "edge": 1.7, "price": "-110", "roi": 3.2, "profit": 26.3, "staked": 815.0, "trust": "firm"}, {"type": "parlay", "label": "Parlays", "n": 129, "w": 37, "l": 92, "hit": 28.7, "be": null, "edge": null, "price": "varies", "roi": 174.2, "profit": 1123.7, "staked": 645.0, "trust": "unreliable"}, {"type": "teaser", "label": "Teasers", "n": 68, "w": 30, "l": 38, "hit": 44.1, "be": 54.5, "edge": -10.4, "price": "-120", "roi": -19.1, "profit": -64.9, "staked": 340.0, "trust": "loose"}, {"type": "moneyline", "label": "Moneylines", "n": 62, "w": 39, "l": 22, "hit": 63.9, "be": 50.0, "edge": 13.9, "price": "+100", "roi": 27.4, "profit": 85.0, "staked": 310.0, "trust": "unreliable"}, {"type": "game_total", "label": "Game totals", "n": 45, "w": 28, "l": 17, "hit": 62.2, "be": 52.4, "edge": 9.8, "price": "-110", "roi": 18.8, "profit": 42.4, "staked": 225.0, "trust": "firm"}, {"type": "future", "label": "Futures", "n": 37, "w": 19, "l": 18, "hit": 51.4, "be": 28.6, "edge": 22.8, "price": "+250", "roi": 79.7, "profit": 147.5, "staked": 185.0, "trust": "unreliable"}, {"type": "other_ufc", "label": "UFC", "n": 27, "w": 17, "l": 8, "hit": 68.0, "be": 50.0, "edge": 18.0, "price": "+100", "roi": 33.3, "profit": 45.0, "staked": 135.0, "trust": "unreliable"}, {"type": "team_total", "label": "Team totals", "n": 24, "w": 8, "l": 16, "hit": 33.3, "be": 53.5, "edge": -20.2, "price": "-115", "roi": -37.7, "profit": -45.2, "staked": 120.0, "trust": "loose"}, {"type": "live_moneyline", "label": "Live \u2014 moneyline", "n": 12, "w": 4, "l": 8, "hit": 33.3, "be": 50.0, "edge": -16.7, "price": "+100", "roi": -33.3, "profit": -20.0, "staked": 60.0, "trust": "unreliable"}, {"type": "live_spread", "label": "Live \u2014 spread", "n": 11, "w": 9, "l": 2, "hit": 81.8, "be": 52.4, "edge": 29.4, "price": "-110", "roi": 56.3, "profit": 30.95, "staked": 55.0, "trust": "firm"}, {"type": "other_cfb", "label": "College football", "n": 10, "w": 2, "l": 8, "hit": 20.0, "be": 50.0, "edge": -30.0, "price": "+100", "roi": -60.0, "profit": -30.0, "staked": 50.0, "trust": "unreliable"}, {"type": "live_player_prop", "label": "Live \u2014 props", "n": 8, "w": 6, "l": 2, "hit": 75.0, "be": 53.5, "edge": 21.5, "price": "-115", "roi": 40.2, "profit": 16.1, "staked": 40.0, "trust": "loose"}, {"type": "other", "label": "Unclassified", "n": 5, "w": 3, "l": 2, "hit": 60.0, "be": 54.5, "edge": 5.5, "price": "-120", "roi": 10.0, "profit": 2.51, "staked": 25.0, "trust": "unreliable"}, {"type": "live_game_total", "label": "Live \u2014 game total", "n": 3, "w": 3, "l": 0, "hit": 100.0, "be": 52.4, "edge": 47.6, "price": "-110", "roi": 91.0, "profit": 13.65, "staked": 15.0, "trust": "firm"}, {"type": "other_mlb", "label": "MLB", "n": 3, "w": 1, "l": 2, "hit": 33.3, "be": 50.0, "edge": -16.7, "price": "+100", "roi": -33.3, "profit": -5.0, "staked": 15.0, "trust": "unreliable"}, {"type": "other_cbb", "label": "College basketball", "n": 3, "w": 1, "l": 2, "hit": 33.3, "be": 50.0, "edge": -16.7, "price": "+100", "roi": -33.3, "profit": -5.0, "staked": 15.0, "trust": "unreliable"}, {"type": "other_nba", "label": "NBA", "n": 2, "w": 2, "l": 0, "hit": 100.0, "be": 50.0, "edge": 50.0, "price": "+100", "roi": 100.0, "profit": 10.0, "staked": 10.0, "trust": "unreliable"}, {"type": "live_other_mlb", "label": "Live \u2014 MLB", "n": 1, "w": 1, "l": 0, "hit": 100.0, "be": 54.5, "edge": 45.5, "price": "-120", "roi": 83.4, "profit": 4.17, "staked": 5.0, "trust": "unreliable"}, {"type": "other_nhl", "label": "NHL", "n": 1, "w": 1, "l": 0, "hit": 100.0, "be": 50.0, "edge": 50.0, "price": "+100", "roi": 100.0, "profit": 5.0, "staked": 5.0, "trust": "unreliable"}, {"type": "other_horses", "label": "Horses", "n": 1, "w": 1, "l": 0, "hit": 100.0, "be": 50.0, "edge": 50.0, "price": "+100", "roi": 100.0, "profit": 5.0, "staked": 5.0, "trust": "unreliable"}], "meta": {"total": 959, "void": 40, "low": 54, "wins": 469, "losses": 481, "weeks": 44, "hit": 49.4}};
+
+/* ==== APP ==== */
+const $=id=>document.getElementById(id);
+const CFG='betcfg:v1', CACHE='betcache:v1';
+let CFGV={url:'',secret:''}, RAW=[], D=null, THR=CONFIG.sampleThreshold;
+
+const LABEL={'player prop':'Player props','spread':'Spreads','parlay':'Parlays','teaser':'Teasers',
+'moneyline':'Moneylines','game total':'Game totals','future':'Futures','team total':'Team totals',
+'method of victory':'Method of victory','win':'Win','place':'Place','show':'Show',
+'exacta':'Exacta','trifecta':'Trifecta','superfecta':'Superfecta','daily double':'Daily double','pick N':'Pick N'};
+const lab=t=>LABEL[t]||t;
+
+const PAL=['#D9A441','#6FA57C','#7E93AD','#C0605A','#8E7CA8','#5E9AA0','#B08968','#7A8B99'];
+const colorFor=(()=>{const m={};let i=0;return t=>(m[t]||(m[t]=PAL[i++%PAL.length]))})();
+
+const money=v=>(v<0?'\u2212':'')+'$'+Math.abs(v).toFixed(2);
+const money0=v=>(v<0?'\u2212':'')+'$'+Math.abs(v).toFixed(0);
+const pct=v=>v==null?'\u2014':(v>0?'+':'')+v.toFixed(1)+'%';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function flash(t,k){const m=$('sysmsg');m.innerHTML=t;m.className='msg '+k}
+
+/* ---------- fetch ---------- */
+async function pull(){
+ if(!CFGV.url) throw new Error('nosetup');
+ const r=await fetch(CFGV.url+'?secret='+encodeURIComponent(CFGV.secret),{redirect:'follow'});
+ const d=await r.json();
+ if(!d.ok) throw new Error(d.error||'the script refused the request');
+ RAW=d.bets||[];
+ lsSet(CACHE,{at:new Date().toISOString(),bets:RAW});
+ return RAW;
+}
+
+/* ---------- the break-even ruler ---------- */
+function ruler(o){
+ // o: {name, need, got, n, gated, left, right, foot}
+ const need=o.need, got=o.got;
+ let zone='';
+ if(need!=null&&got!=null){
+  const a=Math.min(need,got), b=Math.max(need,got);
+  const c=got>=need?'var(--win)':'var(--loss)';
+  zone='<i class="zone" style="left:'+a+'%;width:'+(b-a)+'%;background:'+c+';opacity:.22"></i>';
+ }
+ return '<div class="rule-row'+(o.gated?' gated':'')+'">'+
+  '<div class="rule-head"><div class="rule-name">'+esc(o.name)+
+   (o.gated&&o.n!=null?'<span class="tag">'+o.n+' of '+THR+'</span>':'')+'</div>'+
+   '<div class="rule-meta">'+(o.right||'')+'</div></div>'+
+  '<div class="ruler">'+zone+
+   (need!=null?'<i class="need" style="left:'+need+'%"></i>':'')+
+   (got!=null?'<i class="got" style="left:'+got+'%;background:'+(got>=need?'var(--win)':'var(--loss)')+'"></i>':'')+
+  '</div>'+
+  '<div class="rule-foot"><span>'+(o.foot||'')+'</span><span>'+(o.left||'')+'</span></div>'+
+ '</div>';
+}
+
+/* ---------- VIEW 1 ---------- */
+function renderPosition(){
+ const p=D.position;
+ $('heroBig').textContent=money0(p.openStake);
+ $('heroCap').textContent=p.openCount+' open bet'+(p.openCount===1?'':'s')+' still to resolve';
+ $('hSoon').textContent=money0(p.openSoonStake)+' \u00b7 '+p.openSoon;
+ $('hLong').textContent=money0(p.openLongStake)+' \u00b7 '+p.openLong;
+ $('hSettled').textContent=p.settledCount+' bets';
+ $('hTotal').innerHTML='Settled to date: <b>'+money(p.staked)+'</b> staked, '+
+  '<b class="'+(p.profit>=0?'pos':'neg')+'">'+money(p.profit)+'</b> at <b class="'+
+  (p.roi>=0?'pos':'neg')+'">'+pct(p.roi)+'</b>.'+
+  (p.missingPrice?'<br><span style="color:var(--flag)">'+p.missingPrice+
+   ' bet'+(p.missingPrice===1?'':'s')+' still missing a price \u2014 add the odds in your sheet so they count.</span>':'');
+
+ $('needRows').innerHTML=p.types.filter(t=>t.requiredHit!=null).map(t=>ruler({
+   name:lab(t.type),
+   need:t.requiredHit, got:null,
+   right:'needs '+t.requiredHit.toFixed(1)+'%',
+   foot:t.n+' bet'+(t.n===1?'':'s')+' \u00b7 average price '+(t.avgPrice>0?'+':'')+t.avgPrice+
+        (t.missingPrice?' \u00b7 '+t.missingPrice+' unpriced':'')
+ })).join('')||'<div class="empty">No priced bets yet.</div>';
+
+ $('posTable').innerHTML='<table><thead><tr><th>Bet type</th><th>Bets</th>'+
+  '<th>At risk</th><th class="hide-s">Avg price</th><th>Needs</th></tr></thead><tbody>'+
+  p.types.map(t=>'<tr><td>'+esc(lab(t.type))+'</td><td>'+t.n+'</td><td>'+money(t.stake)+
+   '</td><td class="hide-s mut">'+(t.avgPrice==null?'\u2014':(t.avgPrice>0?'+':'')+t.avgPrice)+
+   '</td><td>'+(t.requiredHit==null?'\u2014':t.requiredHit.toFixed(1)+'%')+'</td></tr>').join('')+
+  '</tbody></table>';
+}
+
+/* ---------- VIEW 2 ---------- */
+function renderMix(){
+ const m=D.mix;
+ const bar='<div class="stackbar">'+m.shares.map(s=>
+   '<i style="width:'+s.stakeShare+'%;background:'+colorFor(s.type)+'" title="'+esc(lab(s.type))+'"></i>').join('')+'</div>';
+ const leg='<div class="legend">'+m.shares.map(s=>
+   '<span><i class="sw" style="background:'+colorFor(s.type)+'"></i>'+esc(lab(s.type))+
+   ' '+s.stakeShare+'%</span>').join('')+'</div>';
+ $('mixNow').innerHTML=bar+leg+
+  '<table><thead><tr><th>Bet type</th><th>Bets</th><th>Share of bets</th>'+
+  '<th>At risk</th><th>Share of money</th></tr></thead><tbody>'+
+  m.shares.map(s=>'<tr><td>'+esc(lab(s.type))+'</td><td>'+s.n+'</td><td>'+s.betShare+
+   '%</td><td>'+money(s.stake)+'</td><td>'+s.stakeShare+'%</td></tr>').join('')+
+  '</tbody></table><div class="note" style="margin-top:12px">Your three largest types hold '+
+  m.concentration+'% of the money you have put at risk.</div>';
+
+ $('mixTime').innerHTML=m.buckets.length<2
+  ? '<div class="empty">Two weeks of betting in, there is only one period to show. This chart fills in as the weeks accumulate.</div>'
+  : m.buckets.map(bk=>{
+     const parts=Object.keys(bk.types).sort((a,b)=>bk.types[b]-bk.types[a]);
+     return '<div class="bucket"><div class="lab"><span>'+bk.start+'</span><span>'+
+      bk.n+' bets \u00b7 '+money0(bk.stake)+'</span></div><div class="stackbar">'+
+      parts.map(t=>'<i style="width:'+bk.types[t]+'%;background:'+colorFor(t)+'" title="'+
+        esc(lab(t))+' '+bk.types[t]+'%"></i>').join('')+'</div></div>';
+    }).join('');
+}
+
+/* ---------- VIEW 3 ---------- */
+function renderResults(){
+ const rr=D.rolling;
+ $('rollRow').innerHTML=rr.map(w=>
+  '<div class="stat'+(w.sufficient?'':' thin')+'"><b class="'+
+   (w.roi==null?'mut':(w.roi>=0?'pos':'neg'))+'">'+(w.sufficient?pct(w.roi):'\u2014')+'</b>'+
+  '<span>last '+w.days+' days'+(w.sufficient
+    ? ' \u00b7 '+w.n+' bets \u00b7 '+money(w.profit)
+    : ' \u00b7 only '+w.n+' settled, needs '+CONFIG.minWindowBets)+'</span></div>').join('');
+
+ drawResultRows();
+
+ const cum=D.cumulative;
+ $('cumWrap').innerHTML=cum.length?cum.map(c=>{
+  const pts=c.points, max=Math.max(60,...pts.map(p=>Math.abs(p.roi)));
+  const W=100,H=52,mid=H/2;
+  const path=pts.map((p,i)=>{
+   const x=pts.length===1?W/2:(i/(pts.length-1))*W;
+   const y=mid-(p.roi/max)*(mid-5);
+   return (i?'L':'M')+x.toFixed(1)+','+y.toFixed(1)}).join(' ');
+  const last=pts[pts.length-1];
+  return '<div class="rule-row"><div class="rule-head"><div class="rule-name">'+esc(lab(c.type))+
+   '</div><div class="rule-meta">'+pts.length+' settled \u00b7 now '+pct(last.roi)+'</div></div>'+
+   '<svg class="spark" viewBox="0 0 100 52" preserveAspectRatio="none" aria-hidden="true">'+
+   '<line x1="0" y1="'+mid+'" x2="100" y2="'+mid+'" stroke="var(--rule)" stroke-width="1"/>'+
+   '<path d="'+path+'" fill="none" stroke="'+(last.roi>=0?'var(--win)':'var(--loss)')+
+   '" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>'+
+   '<div class="rule-foot"><span>scale \u00b1'+Math.round(max)+'%</span><span>'+
+   (pts.length<THR?'too few to read':'settling')+'</span></div></div>'}).join('')
+  : '<div class="empty">Nothing settled yet.</div>';
+}
+
+function drawResultRows(){
+ const rows=D.results.rows;
+ $('thr').textContent=THR;
+ const clear=rows.filter(r=>r.n>=THR).length;
+ $('gated').textContent=clear+' of '+rows.length+' types clear the bar';
+ $('resRows').innerHTML=rows.length?rows.map(r=>ruler({
+   name:lab(r.type), n:r.n, gated:r.n<THR,
+   need:r.requiredHit, got:r.hit,
+   right:r.hit==null?'\u2014':r.hit.toFixed(1)+'% of '+r.requiredHit.toFixed(1)+'% needed',
+   foot:r.w+' won, '+r.l+' lost'+(r.other?', '+r.other+' other':'')+' \u00b7 '+pct(r.roi)
+ })).join(''):'<div class="empty">No settled bets yet. This fills in as bets resolve.</div>';
+
+ $('resTable').innerHTML=rows.length?'<table><thead><tr><th>Bet type</th><th>N</th>'+
+  '<th>W&ndash;L</th><th>Hit</th><th>Needed</th><th class="hide-s">At risk</th>'+
+  '<th>P/L</th><th>ROI</th></tr></thead><tbody>'+rows.map(r=>
+  '<tr class="'+(r.n<THR?'gated':'')+'"><td>'+esc(lab(r.type))+'</td><td>'+r.n+'</td>'+
+  '<td>'+r.w+'\u2013'+r.l+'</td><td>'+(r.hit==null?'\u2014':r.hit+'%')+'</td>'+
+  '<td class="mut">'+(r.requiredHit==null?'\u2014':r.requiredHit+'%')+'</td>'+
+  '<td class="hide-s">'+money(r.stake)+'</td>'+
+  '<td class="'+(r.profit>=0?'pos':'neg')+'">'+money(r.profit)+'</td>'+
+  '<td class="'+(r.roi>=0?'pos':'neg')+'">'+pct(r.roi)+'</td></tr>').join('')+'</tbody></table>':'';
+}
+
+/* ---------- VIEW 4 ---------- */
+function renderHist(){
+ const m=HIST.meta;
+ $('hStats').innerHTML=
+  '<div class="stat"><b>'+m.total+'</b><span>settled outcomes</span></div>'+
+  '<div class="stat"><b>'+m.wins+' \u2013 '+m.losses+'</b><span>won / lost</span></div>'+
+  '<div class="stat"><b>'+m.hit+'%</b><span>hit rate, observed</span></div>'+
+  '<div class="stat"><b>'+m.weeks+'</b><span>weeks covered</span></div>';
+ $('histRows').innerHTML=HIST.types.filter(t=>t.be!=null).map(t=>ruler({
+   name:t.label, n:t.n, gated:t.n<50,
+   need:t.be, got:t.hit,
+   right:t.hit+'% of '+t.be+'% needed',
+   foot:t.w+' won, '+t.l+' lost \u00b7 price assumed '+t.price
+ })).join('');
+ $('histTable').innerHTML='<table><thead><tr><th>Bet type</th><th>N</th><th>Hit</th>'+
+  '<th>Needed</th><th class="hide-s">Assumed</th><th>Modeled ROI</th></tr></thead><tbody>'+
+  HIST.types.map(t=>'<tr class="'+(t.n<50?'gated':'')+'"><td>'+esc(t.label)+'</td><td>'+t.n+'</td>'+
+  '<td>'+t.hit+'%</td><td class="mut">'+(t.be==null?'\u2014':t.be+'%')+'</td>'+
+  '<td class="hide-s mut">'+esc(t.price)+'</td>'+
+  '<td style="color:var(--dim);font-style:italic">'+pct(t.roi)+'</td></tr>').join('')+'</tbody></table>';
+}
+
+/* ---------- boot ---------- */
+function renderAll(asOf){
+ D=buildAll(RAW,asOf);
+ renderPosition(); renderMix(); renderResults();
+ $('foot').innerHTML='Return is profit divided by everything staked, not by bets won. '+
+  'Pushes return your stake and sit out of hit rate. Cashouts count toward return but not hit rate. '+
+  'A parlay counts once, never as its legs. Open bets never appear in return \u2014 only in what is at risk.<br>'+
+  'Types stay greyed below '+THR+' settled bets; rolling windows need '+CONFIG.minWindowBets+'.';
+}
+
+$('r').addEventListener('input',e=>{THR=+e.target.value;drawResultRows()});
+$('refresh').addEventListener('click',async()=>{
+ flash('Refreshing\u2026','info');
+ try{ await pull(); renderAll(); flash('Up to date. '+RAW.length+' bets.','ok');
+      setTimeout(()=>$('sysmsg').className='msg',2500) }
+ catch(e){ flash('Could not reach your sheet: '+esc(e.message),'err') }
+});
+$('exp').addEventListener('click',()=>{
+ const cols=['id','date','channel','sport','type','structure','selection','odds','base','combos','stake','timing','settles','result','payout','note'];
+ const csv=[cols.join(',')].concat(RAW.map(b=>cols.map(c=>{
+  const v=b[c]==null?'':String(b[c]);
+  return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(','))).join('\n');
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+ a.download='bet_ledger.csv';a.click();URL.revokeObjectURL(a.href);
+});
+
+const tabs=[...document.querySelectorAll('.tab')];
+tabs.forEach(t=>t.addEventListener('click',()=>tabs.forEach(o=>{
+ const on=o===t;o.setAttribute('aria-selected',on);$(o.getAttribute('aria-controls')).hidden=!on})));
+
+(async function(){
+ CFGV=lsGet(CFG,{url:'',secret:''});
+ renderHist();
+ const cached=lsGet(CACHE,null);
+ if(!CFGV.url){
+  flash('<b>Not connected.</b> Open <a href="index.html">the ledger</a> and finish setup there first \u2014 '+
+        'this page uses the same connection.','info');
+  $('asof').textContent='Not connected';
+  if(!cached){ RAW=[]; renderAll(); return }
+ }
+ if(cached){ RAW=cached.bets; renderAll(); $('asof').textContent='Showing saved copy'; }
+ try{
+  await pull(); renderAll();
+  $('asof').textContent=RAW.length+' bets \u00b7 read just now';
+  if(CFGV.url) $('sysmsg').className='msg';
+ }catch(e){
+  if(e.message!=='nosetup'){
+   flash(cached
+    ? 'Could not reach your sheet, so this is the last copy saved on this device.'
+    : 'Could not reach your sheet: '+esc(e.message),'info');
+  }
+ }
+})();
+
+</script></body></html>
